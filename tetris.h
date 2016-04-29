@@ -9,8 +9,8 @@
 #include <signal.h>
 #include <string.h>
 
-#define PLAYER1WIN      0
-#define PLAYER2WIN      50
+#define PLAYER1         0
+#define PLAYER2         60
 #define WIDTH	        20
 #define HEIGHT	        30
 #define NOTHING	        0
@@ -227,7 +227,7 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
  *	input	: none
  *	return	: none
  ***********************************************************/
-void DrawField();
+void DrawField(int selectWindow);
 
 /***********************************************************
  *	떨어지는 블럭을 field에 더해준다.
@@ -260,14 +260,14 @@ void gotoyx(int y, int x);
  *	input	: (int*) 블럭의 모양에 대한 ID 배열
  *	return	: none
  ***********************************************************/
-void DrawNextBlock(int *nextBlock);
+void DrawNextBlock(int *nextBlock, int selectWindow);
 
 /***********************************************************
  *	테트리스의 화면 오른쪽 하단에 Score를 출력한다.
  *	input	: (int) 출력할 점수
  *	return	: none
  ***********************************************************/
-void PrintScore(int score);
+void PrintScore(int score, int selectWindow);
 
 /***********************************************************
  *	해당 좌표(y,x)에 원하는 크기(height,width)의 box를 그린다.
@@ -277,7 +277,7 @@ void PrintScore(int score);
  *		  (int) 박스의 넓이
  *	return	: none
  ***********************************************************/
-void DrawBox(int y,int x, int height, int width);
+void DrawBox(int y,int x, int height, int width, int selectWindow);
 
 /***********************************************************
  *	해당 좌표(y,x)에 원하는 모양의 블록을 그린다.
@@ -288,7 +288,8 @@ void DrawBox(int y,int x, int height, int width);
  *		  (char) 블록을 그릴 패턴 모양
  *	return	: none
  ***********************************************************/
-void DrawBlock(int y, int x, int blockID,int blockRotate,char tile);
+void DrawBlock(int y, int x, int blockID,
+        int blockRotate, char tile, int selectWindow);
 
 /***********************************************************
  *	블록이 떨어질 위치를 미리 보여준다.
@@ -298,7 +299,7 @@ void DrawBlock(int y, int x, int blockID,int blockRotate,char tile);
  *		  (int) 블록의 회전 횟수
  *	return	: none
  ***********************************************************/
-void DrawShadow(int y, int x, int blockID,int blockRotate);
+void DrawShadow(int y, int x, int blockID,int blockRotate, int selectWindow);
 
 /***********************************************************
  *	움직임이 갱신될 때마다 현재 블록과 함께 그림자를 그린다.
@@ -308,7 +309,7 @@ void DrawShadow(int y, int x, int blockID,int blockRotate);
  *		  (int) 블록의 회전 횟수
  *	return	: none
  ***********************************************************/
-void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate);
+void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate, int selectWindow);
 
 /***********************************************************
  *	테트리스 게임을 시작한다.

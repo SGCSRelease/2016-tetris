@@ -55,30 +55,38 @@ void InitTetris(){/*{{{*/
 	move(22,WIDTH+10);
 	printw("score/space(byte) =");
 	DrawOutline();
-	DrawField();
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
-	DrawNextBlock(nextBlock);
-	PrintScore(score);
+	DrawField(PLAYER1);
+    DrawField(PLAYER2);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,PLAYER1);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,PLAYER2);
+	DrawNextBlock(nextBlock, PLAYER1);
+    DrawNextBlock(nextBlock, PLAYER2);
+	PrintScore(score, PLAYER1);
+    PrintScore(score, PLAYER2);
 }/*}}}*/
 
 void DrawOutline(){	/*{{{*/
 	int i,j;
 	/* 블럭이 떨어지는 공간의 테두리를 그린다.*/
-	DrawBox(0,0,HEIGHT,WIDTH);
+	DrawBox(0,0,HEIGHT,WIDTH, PLAYER1);
+	DrawBox(0,0,HEIGHT,WIDTH, PLAYER2);
 
 	/* next block을 보여주는 공간의 테두리를 그린다.*/
 	move(2,WIDTH+10);
 	printw("NEXT BLOCK");
-	DrawBox(3,WIDTH+10,4,8);
+	DrawBox(3,WIDTH+10,4,8, PLAYER1);
+	DrawBox(3,WIDTH+10,4,8, PLAYER2);
 
 	/* next next block을 보여주는 공간의 테두리를 그린다.*/
 	move(9,WIDTH+10);
-	DrawBox(9,WIDTH+10,4,8);
+	DrawBox(9,WIDTH+10,4,8, PLAYER1);
+	DrawBox(9,WIDTH+10,4,8, PLAYER2);
 	
 	/* score를 보여주는 공간의 테두리를 그린다.*/
 	move(16,WIDTH+10);
 	printw("SCORE");
-	DrawBox(17,WIDTH+10,1,8);
+	DrawBox(17,WIDTH+10,1,8, PLAYER1);
+	DrawBox(17,WIDTH+10,1,8, PLAYER2);
 }/*}}}*/
 
 int GetCommand(){/*{{{*/
@@ -141,11 +149,11 @@ int ProcessCommand(int command){/*{{{*/
 	return ret;	
 }/*}}}*/
 
-void DrawField(int WIN){/*{{{*/
+void DrawField(int selectWindow){/*{{{*/
 	int i,j;
 	for(j=0;j<HEIGHT;j++){
-		move(j+1,1);
-		for(i=0;i<WIN + WIDTH;i++){
+		move(j+1,selectWindow + 1);
+		for(i=selectWindow;i<selectWindow + WIDTH;i++){
 			if(field[j][i]==1){
 				attron(A_REVERSE);
 				printw(" ");
@@ -156,15 +164,15 @@ void DrawField(int WIN){/*{{{*/
 	}
 }/*}}}*/
 
-void PrintScore(int score){/*{{{*/
-	move(18,WIDTH+11);
+void PrintScore(int score, int selectWindow){/*{{{*/
+	move(18,selectWindow + WIDTH+11);
 	printw("%8d",score);
 }/*}}}*/
 
-void DrawNextBlock(int *nextBlock){/*{{{*/
+void DrawNextBlock(int *nextBlock, int selectWindow){/*{{{*/
 	int i, j;
 	for( i = 0; i < 4; i++ ){
-		move(4+i,WIDTH+13);
+		move(4+i,selectWindow + WIDTH+13);
 		for( j = 0; j < 4; j++ ){
 			if( block[nextBlock[1]][0][i][j] == 1 ){
 				attron(A_REVERSE);
@@ -175,7 +183,7 @@ void DrawNextBlock(int *nextBlock){/*{{{*/
 		}
 	}
 	for( i = 0; i < 4; i++ ){
-		move(10+i,WIDTH+13);
+		move(10+i,selectWindow + WIDTH+13);
 		for( j = 0; j < 4; j++ ){
 			if( block[nextBlock[2]][0][i][j] == 1 ){
 				attron(A_REVERSE);
@@ -187,37 +195,38 @@ void DrawNextBlock(int *nextBlock){/*{{{*/
 	}
 }/*}}}*/
 
-void DrawBlock(int y, int x, int blockID,int blockRotate,char tile){/*{{{*/
+void DrawBlock(int y, int x, int blockID,
+        int blockRotate, char tile, int selectWindow){/*{{{*/
 	int i,j;
 	
 	for(i=0;i<4;i++)
 		for(j=0;j<4;j++)
 			if(block[blockID][blockRotate][i][j]==1 && i+y>=0){
-				move(i+y+1,j+x+1);
+				move(i+y+1,selectWindow + j+x+1);
 				attron(A_REVERSE);
 				printw("%c",tile);
 				attroff(A_REVERSE);
 			}
 
-	move(HEIGHT,WIDTH+10);
+	move(HEIGHT,selectWindow + WIDTH+10);
 }/*}}}*/
 
-void DrawBox(int y,int x, int height, int width){/*{{{*/
+void DrawBox(int y,int x, int height, int width, int selectWindow){/*{{{*/
 	int i,j;
-	move(y,x);
+	move(y,selectWindow + x);
 	addch(ACS_ULCORNER);
-	for(i=0;i<width;i++)
+	for(i=selectWindow;i<selectWindow + width;i++)
 		addch(ACS_HLINE);
 	addch(ACS_URCORNER);
 	for(j=0;j<height;j++){
-		move(y+j+1,x);
+		move(y+j+1,selectWindow + x);
 		addch(ACS_VLINE);
-		move(y+j+1,x+width+1);
+		move(y+j+1,selectWindow + x+width+1);
 		addch(ACS_VLINE);
 	}
-	move(y+j+1,x);
+	move(y+j+1,selectWindow + x);
 	addch(ACS_LLCORNER);
-	for(i=0;i<width;i++)
+	for(i=selectWindow;i<selectWindow + width;i++)
 		addch(ACS_HLINE);
 	addch(ACS_LRCORNER);
 }/*}}}*/
@@ -237,7 +246,8 @@ void play(){/*{{{*/
 		command = GetCommand();
 		if(ProcessCommand(command)==QUIT){
 			alarm(0);
-			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
 			move(HEIGHT/2,WIDTH/2-4);
 			printw("Good-bye!!");
 			refresh();
@@ -250,7 +260,8 @@ void play(){/*{{{*/
 
 	alarm(0);
 	getch();
-	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
 	move(HEIGHT/2,WIDTH/2-4);
 	printw("GameOver!!");
 	refresh();
@@ -303,7 +314,8 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 			}
 		}
 	
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate, PLAYER1);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate, PLAYER2);
 }/*}}}*/
 
 void BlockDown(int sig){/*{{{*/
@@ -325,9 +337,12 @@ void BlockDown(int sig){/*{{{*/
 			nextBlock[i] = nextBlock[i+1];
 		nextBlock[i] = rand()%7;
 
-		DrawNextBlock(nextBlock);
-		DrawField();
-		PrintScore(score);
+		DrawNextBlock(nextBlock, PLAYER1);
+        DrawNextBlock(nextBlock, PLAYER2);
+		DrawField(PLAYER1);
+        DrawField(PLAYER2);
+		PrintScore(score, PLAYER1);
+        PrintScore(score, PLAYER2);
 	
 		recommend();
 
@@ -372,15 +387,15 @@ int DeleteLine(char f[HEIGHT][WIDTH]){/*{{{*/
 	return cnt*cnt*100;
 }/*}}}*/
 
-void DrawShadow(int y, int x, int blockID,int blockRotate){/*{{{*/
-	for(;CheckToMove(field,blockID,blockRotate,y+1,x)!=0;++y);
-	DrawBlock(y,x,blockID,blockRotate,'\\');
+void DrawShadow(int y, int x, int blockID,int blockRotate, int selectWindow){/*{{{*/
+	for(;CheckToMove(field,blockID,blockRotate,y+1,selectWindow)!=0;++y);
+	DrawBlock(y,x,blockID,blockRotate,'\\', selectWindow);
 }/*}}}*/
 
-void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate){/*{{{*/
-	DrawBlock(y,x,blockID,blockRotate,' ');
-	DrawBlock(recommendY,recommendX,blockID,recommendR,'R');
-	DrawShadow(y,x,blockID,blockRotate);
+void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate, int selectWindow){/*{{{*/
+	DrawBlock(y,x,blockID,blockRotate,' ', selectWindow);
+	DrawBlock(recommendY,recommendX,blockID,recommendR,'R', selectWindow);
+	DrawShadow(y,x,blockID,blockRotate,selectWindow);
 }/*}}}*/
 
 void createRankList(){/*{{{*/
@@ -607,9 +622,12 @@ void BlockDownRecommend(int sig){/*{{{*/
 			nextBlock[i] = nextBlock[i+1];
 		nextBlock[i] = rand()%7;
 
-		DrawNextBlock(nextBlock);
-		DrawField();
-		PrintScore(score);
+		DrawNextBlock(nextBlock, PLAYER1);
+        DrawNextBlock(nextBlock, PLAYER2);
+		DrawField(PLAYER1);
+        DrawField(PLAYER2);
+		PrintScore(score, PLAYER1);
+        PrintScore(score, PLAYER2);
 
 		blockY = -1;
 		blockX = WIDTH/2-2;
@@ -640,7 +658,8 @@ void recommendedPlay(){/*{{{*/
 		command = GetCommand();
 		if(ProcessCommand(command)==QUIT){
 			alarm(0);
-			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
 			move(HEIGHT/2,WIDTH/2-4);
 			printw("Good-bye!!");
 			refresh();
@@ -652,7 +671,8 @@ void recommendedPlay(){/*{{{*/
 
 	alarm(0);
 	getch();
-	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
 	move(HEIGHT/2,WIDTH/2-4);
 	printw("GameOver!!");
 	refresh();
