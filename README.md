@@ -1,3 +1,3 @@
 #TETRIS
 
-This is for tetris for Release Team
+This is tetris for Release Team
