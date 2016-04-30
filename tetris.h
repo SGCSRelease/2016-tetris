@@ -220,7 +220,7 @@ int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int bloc
  *		  (int) 블럭의 X좌표
  *	return	: none
  ***********************************************************/
-void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX);
+void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX, int selectWindow);
 
 /***********************************************************
  *	테트리스의 블럭이 쌓이는 field를 그려준다.

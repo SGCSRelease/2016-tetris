@@ -145,7 +145,8 @@ int ProcessCommand(int command){/*{{{*/
 	default:
 		break;
 	}
-	if(drawFlag) DrawChange(field,command,nextBlock[0],blockRotate,blockY,blockX);
+	if(drawFlag) DrawChange(field,command,nextBlock[0],blockRotate,blockY,blockX, PLAYER1);
+	if(drawFlag) DrawChange(field,command,nextBlock[0],blockRotate,blockY,blockX, PLAYER2);
 	return ret;	
 }/*}}}*/
 
@@ -288,15 +289,15 @@ int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int bloc
 	return 1;
 }/*}}}*/
 
-void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX){/*{{{*/
+void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX, int selectWindow){/*{{{*/
 	int i,j,x,y,rot,pre;
 
 	switch(command){
-		case KEY_UP:    x = blockX;   y = blockY;   rot = (blockRotate+3)%4; break;
-		case KEY_DOWN:  x = blockX;   y = blockY-1; rot = blockRotate;       break;
-		case KEY_LEFT:  x = blockX+1; y = blockY;   rot = blockRotate;       break;
-		case KEY_RIGHT: x = blockX-1; y = blockY;   rot = blockRotate;       break;
-		default:        x = blockX;   y = blockY;   rot = blockRotate;       break;
+		case KEY_UP:    x = selectWindow + blockX;   y = blockY;   rot = (blockRotate+3)%4; break;
+		case KEY_DOWN:  x = selectWindow + blockX;   y = blockY-1; rot = blockRotate;       break;
+		case KEY_LEFT:  x = selectWindow + blockX+1; y = blockY;   rot = blockRotate;       break;
+		case KEY_RIGHT: x = selectWindow + blockX-1; y = blockY;   rot = blockRotate;       break;
+		default:        x = selectWindow + blockX;   y = blockY;   rot = blockRotate;       break;
 	}
 	
 	for(pre=y;CheckToMove(field,currentBlock,rot,pre+1,x)!=0;++pre);
@@ -324,7 +325,8 @@ void BlockDown(int sig){/*{{{*/
 	if(CheckToMove(field,nextBlock[0],blockRotate,blockY+1,blockX))
 	{
 		blockY++;
-		DrawChange(field,KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX);
+		DrawChange(field,KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX, PLAYER1);
+		DrawChange(field,KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX, PLAYER2);
 	}
 	else
 	{
@@ -388,7 +390,7 @@ int DeleteLine(char f[HEIGHT][WIDTH]){/*{{{*/
 }/*}}}*/
 
 void DrawShadow(int y, int x, int blockID,int blockRotate, int selectWindow){/*{{{*/
-	for(;CheckToMove(field,blockID,blockRotate,y+1,selectWindow)!=0;++y);
+	for(;CheckToMove(field,blockID,blockRotate,y+1,selectWindow + x)!=0;++y);
 	DrawBlock(y,x,blockID,blockRotate,'\\', selectWindow);
 }/*}}}*/
 
@@ -608,14 +610,16 @@ void BlockDownRecommend(int sig){/*{{{*/
 		blockRotate = recommendR;
 		blockX = recommendX;
 		blockY = recommendY;
-		DrawChange(field,KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX);
+		DrawChange(field,KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX, PLAYER1);
+		DrawChange(field,KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX, PLAYER2);
 	}
 	else
 	{
 		total_moves++;
 		if(blockY==-1) gameOver = true;
 
-		score += AddBlockToField(field,nextBlock[0],blockRotate,blockY,blockX);
+		score += AddBlockToField(field,nextBlock[0],blockRotate,blockY,blockX+PLAYER1);
+		score += AddBlockToField(field,nextBlock[0],blockRotate,blockY,blockX+PLAYER2);
 		score += DeleteLine(field);
 
 		for(i=0;i<BLOCK_NUM-1;++i)
