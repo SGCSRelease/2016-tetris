@@ -16,7 +16,6 @@ int main(){/*{{{*/
 		switch(menu()){
 		case MENU_PLAY: play(); break;
 		case MENU_RANK: rank(); break;
-		case MENU_RECO: recommendedPlay(); break;
 		case MENU_EXIT: exit=1; break;
 		default: break;
 		}
@@ -46,7 +45,6 @@ void InitTetris(int selectPlayer){/*{{{*/
 	total_seconds = 0.0;
 	total_moves = 0;
 	
-	recommend();
 	move(20,selectPlayer*WINSPAN + WIDTH+10);
 	printw("total time(s) =");
 	move(21,selectPlayer*WINSPAN + WIDTH+10);
@@ -275,8 +273,7 @@ void play(){/*{{{*/
 char menu(){/*{{{*/
 	printw("1. play\n");
 	printw("2. rank\n");
-	printw("3. recommended play\n");
-	printw("4. exit\n");
+	printw("3. exit\n");
 	return wgetch(stdscr);
 }/*}}}*/
 
@@ -351,8 +348,6 @@ void BlockDown(int sig){/*{{{*/
 		PrintScore(score, PLAYER1);
         PrintScore(score, PLAYER2);
 	
-		recommend();
-
 		blockY = -1;
 		blockX = WIDTH/2-2;
 		blockRotate = 0;
@@ -401,7 +396,6 @@ void DrawShadow(int y, int x, int blockID,int blockRotate, int selectPlayer){/*{
 
 void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate, int selectPlayer){/*{{{*/
 	DrawBlock(y,x,blockID,blockRotate,' ', selectPlayer);
-	DrawBlock(recommendY,recommendX,blockID,recommendR,'R', selectPlayer);
 	DrawShadow(y,x,blockID,blockRotate,selectPlayer);
 }/*}}}*/
 
@@ -543,148 +537,4 @@ void newRank(int score){/*{{{*/
 
 	rankRoot[i].score = score;
 	strcpy(rankRoot[i].name,str);
-}/*}}}*/
-
-void recommend(void){/*{{{*/
-	int rot,y,x,i,j;
-	int minblank=-1,mindiff=-1;
-	int resultx=-1,resulty=-1,resultrot=-1;
-	int blank,diff;
-	int h[WIDTH] = {0,};
-
-	for(rot=0;rot<NUM_OF_ROTATE;++rot)
-	{
-		for(x=0-BLOCK_WIDTH;x<WIDTH;++x)
-		{
-			if(CheckToMove(field[PLAYER1],nextBlock[0],rot,0,x))
-			{
-				for(y=0;CheckToMove(field[PLAYER1],nextBlock[0],rot,y+1,x);++y);
-				for(i=0;i<BLOCK_HEIGHT;++i)
-					for(j=0;j<BLOCK_WIDTH;++j)
-						if(block[nextBlock[0]][rot][i][j])
-							field[PLAYER1][i+y][j+x] = 1;
-
-				for(i=0;i<WIDTH;++i)
-					for(j=0;j<HEIGHT;++j)
-						if(field[PLAYER1][j][i])
-						{
-							h[i] = j;
-							break;
-						}
-				for(diff=0,i=1;i<WIDTH;++i)
-					diff += h[i]>h[i-1]?(h[i]-h[i-1]):(h[i-1]-h[i]);
-				for(blank=0,i=0;i<WIDTH;++i)
-					for(j=h[i];j<HEIGHT;++j)
-						if(field[PLAYER1][j][i]==0)
-							blank++;
-				
-				if(minblank==-1||(minblank>blank)||((minblank==blank)&&(mindiff>diff)))
-				{
-					minblank = blank;
-					mindiff = diff;
-					resultx = x;
-					resulty = y;
-					resultrot = rot;
-				}
-				for(i=0;i<BLOCK_HEIGHT;++i)
-					for(j=0;j<BLOCK_WIDTH;++j)
-						if(block[nextBlock[0]][rot][i][j])
-							field[PLAYER1][i+y][j+x] = 0;
-			}
-		}
-	}
-	recommendX = resultx;
-	recommendY = resulty;
-	recommendR = resultrot;
-}/*}}}*/
-
-void BlockDownRecommend(int sig){/*{{{*/
-	int i,j;
-	int prescore = 0;
-	clock_t old;
-
-	// for time calculation
-	old = clock();
-	for(i=0;i<1000;++i) recommend();
-	old = clock()-old;
-	total_seconds += ( (float)old/CLOCKS_PER_SEC );
-	
-	if(CheckToMove(field[PLAYER1],nextBlock[0],blockRotate,blockY+1,blockX))
-	{
-		recommend();
-		blockRotate = recommendR;
-		blockX = recommendX;
-		blockY = recommendY;
-		DrawChange(field[PLAYER1],KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX, PLAYER1);
-		DrawChange(field[PLAYER2],KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX, PLAYER2);
-	}
-	else
-	{
-		total_moves++;
-		if(blockY==-1) gameOver = true;
-
-		score += AddBlockToField(field[PLAYER1],nextBlock[0],blockRotate,blockY,blockX);
-		score += AddBlockToField(field[PLAYER2],nextBlock[0],blockRotate,blockY,blockX);
-		score += DeleteLine(field[PLAYER1]);
-
-		for(i=0;i<BLOCK_NUM-1;++i)
-			nextBlock[i] = nextBlock[i+1];
-		nextBlock[i] = rand()%7;
-
-		DrawNextBlock(nextBlock, PLAYER1);
-        DrawNextBlock(nextBlock, PLAYER2);
-		DrawField(PLAYER1);
-        DrawField(PLAYER2);
-		PrintScore(score, PLAYER1);
-        PrintScore(score, PLAYER2);
-
-		blockY = -1;
-		blockX = WIDTH/2-2;
-		blockRotate = 0;
-	}
-	move(20,WIDTH+10);
-	printw("total time(s) = %1.5f",total_seconds/1000);
-	move(21,WIDTH+10);
-	printw("score/time(s) = %d", (int)(score/total_seconds*1000));
-	move(22,WIDTH+10);
-	printw("score/space(byte) = %.4f", (float)score/(float)((12+WIDTH)*sizeof(int)*total_moves));
-	timed_out = 0;
-}/*}}}*/
-
-void recommendedPlay(){/*{{{*/
-	// user code
-	int command;
-	clear();
-	act.sa_handler = BlockDownRecommend;
-	sigaction(SIGALRM,&act,&oact);
-	InitTetris(PLAYER1);
-	InitTetris(PLAYER2);
-	do{
-		if(timed_out==0){
-			alarm(1);
-			timed_out=1;
-		}
-
-		command = GetCommand();
-		if(ProcessCommand(command)==QUIT){
-			alarm(0);
-			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
-			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
-			move(HEIGHT/2,WIDTH/2-4);
-			printw("Good-bye!!");
-			refresh();
-			getch();
-
-			return;
-		}
-	}while(!gameOver);
-
-	alarm(0);
-	getch();
-	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
-	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
-	move(HEIGHT/2,WIDTH/2-4);
-	printw("GameOver!!");
-	refresh();
-	getch();
 }/*}}}*/
