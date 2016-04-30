@@ -28,12 +28,11 @@ int main(){/*{{{*/
 	return 0;
 }/*}}}*/
 
-void InitTetris(){/*{{{*/
-	int i,j, window;
-    for(window = 0; window < 2; ++window)
-        for(j=0;j<HEIGHT;j++)
-            for(i=0;i<WIDTH;i++)
-                field[window][j][i]=0;
+void InitTetris(int selectPlayer){/*{{{*/
+	int i,j;
+    for(j=0;j<HEIGHT;j++)
+        for(i=0;i<WIDTH;i++)
+            field[selectPlayer][j][i]=0;
 
 	for(i=0;i<BLOCK_NUM;++i)
 		nextBlock[i] = rand()%7;
@@ -48,21 +47,17 @@ void InitTetris(){/*{{{*/
 	total_moves = 0;
 	
 	recommend();
-	move(20,WIDTH+10);
+	move(20,selectPlayer*WINSPAN + WIDTH+10);
 	printw("total time(s) =");
-	move(21,WIDTH+10);
+	move(21,selectPlayer*WINSPAN + WIDTH+10);
 	printw("score/time(s) =");
-	move(22,WIDTH+10);
+	move(22,selectPlayer*WINSPAN + WIDTH+10);
 	printw("score/space(byte) =");
 	DrawOutline();
-	DrawField(PLAYER1);
-    DrawField(PLAYER2);
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,PLAYER1);
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,PLAYER2);
-	DrawNextBlock(nextBlock, PLAYER1);
-    DrawNextBlock(nextBlock, PLAYER2);
-	PrintScore(score, PLAYER1);
-    PrintScore(score, PLAYER2);
+	DrawField(selectPlayer);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,selectPlayer);
+	DrawNextBlock(nextBlock, selectPlayer);
+	PrintScore(score, selectPlayer);
 }/*}}}*/
 
 void DrawOutline(){	/*{{{*/
@@ -145,8 +140,10 @@ int ProcessCommand(int command){/*{{{*/
 	default:
 		break;
 	}
-	if(drawFlag) DrawChange(field[PLAYER1],command,nextBlock[0],blockRotate,blockY,blockX, PLAYER1);
-	if(drawFlag) DrawChange(field[PLAYER2],command,nextBlock[0],blockRotate,blockY,blockX, PLAYER2);
+	if(drawFlag) {
+        DrawChange(field[PLAYER1],command,nextBlock[0],blockRotate,blockY,blockX, PLAYER1);
+        DrawChange(field[PLAYER2],command,nextBlock[0],blockRotate,blockY,blockX, PLAYER2);
+    }
 	return ret;	
 }/*}}}*/
 
@@ -237,7 +234,8 @@ void play(){/*{{{*/
 	clear();
 	act.sa_handler = BlockDown;
 	sigaction(SIGALRM,&act,&oact);
-	InitTetris();
+	InitTetris(PLAYER1);
+	InitTetris(PLAYER2);
 	do{
 		if(timed_out==0){
 			alarm(1);
@@ -250,6 +248,8 @@ void play(){/*{{{*/
 			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
 			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
 			move(HEIGHT/2,WIDTH/2-4);
+			printw("Good-bye!!");
+			move(HEIGHT/2,WINSPAN + WIDTH/2-4);
 			printw("Good-bye!!");
 			refresh();
 			getch();
@@ -264,6 +264,8 @@ void play(){/*{{{*/
 	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
 	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
 	move(HEIGHT/2,WIDTH/2-4);
+	printw("GameOver!!");
+	move(HEIGHT/2,WINSPAN + WIDTH/2-4);
 	printw("GameOver!!");
 	refresh();
 	getch();
@@ -294,15 +296,16 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,
 	int i,j,x,y,rot,pre;
 
 	switch(command){
-		case KEY_UP:    x = selectPlayer*WINSPAN + blockX;   y = blockY;   rot = (blockRotate+3)%4; break;
-		case KEY_DOWN:  x = selectPlayer*WINSPAN + blockX;   y = blockY-1; rot = blockRotate;       break;
-		case KEY_LEFT:  x = selectPlayer*WINSPAN + blockX+1; y = blockY;   rot = blockRotate;       break;
-		case KEY_RIGHT: x = selectPlayer*WINSPAN + blockX-1; y = blockY;   rot = blockRotate;       break;
-		default:        x = selectPlayer*WINSPAN + blockX;   y = blockY;   rot = blockRotate;       break;
+		case KEY_UP:    x =blockX;   y = blockY;   rot = (blockRotate+3)%4; break;
+		case KEY_DOWN:  x =blockX;   y = blockY-1; rot = blockRotate;       break;
+		case KEY_LEFT:  x =blockX+1; y = blockY;   rot = blockRotate;       break;
+		case KEY_RIGHT: x =blockX-1; y = blockY;   rot = blockRotate;       break;
+		default:        x =blockX;   y = blockY;   rot = blockRotate;       break;
 	}
 	
 	for(pre=y;CheckToMove(field[selectPlayer],currentBlock,rot,pre+1,x)!=0;++pre);
 	
+    x += selectPlayer*WINSPAN;
 
 	for(i=0;i<4;++i)
 		for(j=0;j<4;++j)
@@ -316,8 +319,7 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,
 			}
 		}
 	
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate, PLAYER1);
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate, PLAYER2);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate, selectPlayer);
 }/*}}}*/
 
 void BlockDown(int sig){/*{{{*/
@@ -335,6 +337,8 @@ void BlockDown(int sig){/*{{{*/
 		
 		score += AddBlockToField(field[PLAYER1],nextBlock[0],blockRotate,blockY,blockX);
 		score += DeleteLine(field[PLAYER1]);
+		score += AddBlockToField(field[PLAYER2],nextBlock[0],blockRotate,blockY,blockX);
+		score += DeleteLine(field[PLAYER2]);
 		
 		for(i=0;i<BLOCK_NUM-1;++i)
 			nextBlock[i] = nextBlock[i+1];
@@ -562,7 +566,7 @@ void recommend(void){/*{{{*/
 
 				for(i=0;i<WIDTH;++i)
 					for(j=0;j<HEIGHT;++j)
-						if(field[j][i])
+						if(field[PLAYER1][j][i])
 						{
 							h[i] = j;
 							break;
@@ -571,7 +575,7 @@ void recommend(void){/*{{{*/
 					diff += h[i]>h[i-1]?(h[i]-h[i-1]):(h[i-1]-h[i]);
 				for(blank=0,i=0;i<WIDTH;++i)
 					for(j=h[i];j<HEIGHT;++j)
-						if(field[j][i]==0)
+						if(field[PLAYER1][j][i]==0)
 							blank++;
 				
 				if(minblank==-1||(minblank>blank)||((minblank==blank)&&(mindiff>diff)))
@@ -653,7 +657,8 @@ void recommendedPlay(){/*{{{*/
 	clear();
 	act.sa_handler = BlockDownRecommend;
 	sigaction(SIGALRM,&act,&oact);
-	InitTetris();
+	InitTetris(PLAYER1);
+	InitTetris(PLAYER2);
 	do{
 		if(timed_out==0){
 			alarm(1);
