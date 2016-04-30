@@ -10,7 +10,8 @@
 #include <string.h>
 
 #define PLAYER1         0
-#define PLAYER2         60
+#define PLAYER2         1
+#define WINSPAN         60
 #define WIDTH	        20
 #define HEIGHT	        30
 #define NOTHING	        0
@@ -137,7 +138,7 @@ const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={
 	}
 };
 
-char field[HEIGHT][WIDTH];	/* 테트리스의 메인 게임 화면 */
+char field[2][HEIGHT][WIDTH];	/* 테트리스의 메인 게임 화면 */
 int nextBlock[BLOCK_NUM];	/* 현재 블럭의 ID와 다음 블럭의 ID들을 저장; [0]: 현재 블럭; [1]: 다음 블럭 */
 int blockRotate,blockY,blockX;	/* 현재 블럭의 회전, 블럭의 Y 좌표, 블럭의 X 좌표*/
 int score;			/* 점수가 저장*/
@@ -220,14 +221,14 @@ int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int bloc
  *		  (int) 블럭의 X좌표
  *	return	: none
  ***********************************************************/
-void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX, int selectWindow);
+void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX, int selectPlayer);
 
 /***********************************************************
  *	테트리스의 블럭이 쌓이는 field를 그려준다.
  *	input	: none
  *	return	: none
  ***********************************************************/
-void DrawField(int selectWindow);
+void DrawField(int selectPlayer);
 
 /***********************************************************
  *	떨어지는 블럭을 field에 더해준다.
@@ -260,14 +261,14 @@ void gotoyx(int y, int x);
  *	input	: (int*) 블럭의 모양에 대한 ID 배열
  *	return	: none
  ***********************************************************/
-void DrawNextBlock(int *nextBlock, int selectWindow);
+void DrawNextBlock(int *nextBlock, int selectPlayer);
 
 /***********************************************************
  *	테트리스의 화면 오른쪽 하단에 Score를 출력한다.
  *	input	: (int) 출력할 점수
  *	return	: none
  ***********************************************************/
-void PrintScore(int score, int selectWindow);
+void PrintScore(int score, int selectPlayer);
 
 /***********************************************************
  *	해당 좌표(y,x)에 원하는 크기(height,width)의 box를 그린다.
@@ -277,7 +278,7 @@ void PrintScore(int score, int selectWindow);
  *		  (int) 박스의 넓이
  *	return	: none
  ***********************************************************/
-void DrawBox(int y,int x, int height, int width, int selectWindow);
+void DrawBox(int y,int x, int height, int width, int selectPlayer);
 
 /***********************************************************
  *	해당 좌표(y,x)에 원하는 모양의 블록을 그린다.
@@ -289,7 +290,7 @@ void DrawBox(int y,int x, int height, int width, int selectWindow);
  *	return	: none
  ***********************************************************/
 void DrawBlock(int y, int x, int blockID,
-        int blockRotate, char tile, int selectWindow);
+        int blockRotate, char tile, int selectPlayer);
 
 /***********************************************************
  *	블록이 떨어질 위치를 미리 보여준다.
@@ -299,7 +300,7 @@ void DrawBlock(int y, int x, int blockID,
  *		  (int) 블록의 회전 횟수
  *	return	: none
  ***********************************************************/
-void DrawShadow(int y, int x, int blockID,int blockRotate, int selectWindow);
+void DrawShadow(int y, int x, int blockID,int blockRotate, int selectPlayer);
 
 /***********************************************************
  *	움직임이 갱신될 때마다 현재 블록과 함께 그림자를 그린다.
@@ -309,7 +310,7 @@ void DrawShadow(int y, int x, int blockID,int blockRotate, int selectWindow);
  *		  (int) 블록의 회전 횟수
  *	return	: none
  ***********************************************************/
-void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate, int selectWindow);
+void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate, int selectPlayer);
 
 /***********************************************************
  *	테트리스 게임을 시작한다.
