@@ -7,6 +7,7 @@ int main(){/*{{{*/
 
 	initscr();
 	noecho();
+    curs_set(0);
 	keypad(stdscr, TRUE);	
 
 	srand((unsigned int)time(NULL));
@@ -27,11 +28,12 @@ int main(){/*{{{*/
 	return 0;
 }/*}}}*/
 
-void InitTetris(int selectPlayer){/*{{{*/
-	int i,j;
-    for(j=0;j<HEIGHT;j++)
-        for(i=0;i<WIDTH;i++)
-            field[selectPlayer][j][i]=0;
+void InitTetris(void){/*{{{*/
+	int i,j,window;
+    for(window = 0; window < 2; ++window)
+        for(j=0;j<HEIGHT;j++)
+            for(i=0;i<WIDTH;i++)
+                field[window][j][i]=0;
 
 	for(i=0;i<BLOCK_NUM;++i)
 		nextBlock[i] = rand()%7;
@@ -45,20 +47,32 @@ void InitTetris(int selectPlayer){/*{{{*/
 	total_seconds = 0.0;
 	total_moves = 0;
 	
-	move(20,selectPlayer*WINSPAN + WIDTH+10);
+    // Player 1
+	move(20,WIDTH+10);
 	printw("total time(s) =");
-	move(21,selectPlayer*WINSPAN + WIDTH+10);
+	move(21,WIDTH+10);
 	printw("score/time(s) =");
-	move(22,selectPlayer*WINSPAN + WIDTH+10);
+	move(22,WIDTH+10);
+	printw("score/space(byte) =");
+    // Player 2
+	move(20,WINSPAN + WIDTH+10);
+	printw("total time(s) =");
+	move(21,WINSPAN + WIDTH+10);
+	printw("score/time(s) =");
+	move(22,WINSPAN + WIDTH+10);
 	printw("score/space(byte) =");
 	DrawOutline();
-	DrawField(selectPlayer);
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,selectPlayer);
-	DrawNextBlock(nextBlock, selectPlayer);
-	PrintScore(score, selectPlayer);
+	DrawField(PLAYER1);
+	DrawField(PLAYER2);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,PLAYER1);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,PLAYER2);
+	DrawNextBlock(nextBlock, PLAYER1);
+	DrawNextBlock(nextBlock, PLAYER2);
+	PrintScore(score, PLAYER1);
+	PrintScore(score, PLAYER2);
 }/*}}}*/
 
-void DrawOutline(){	/*{{{*/
+void DrawOutline(void){	/*{{{*/
 	int i,j;
 	/* 블럭이 떨어지는 공간의 테두리를 그린다.*/
 	DrawBox(0,0,HEIGHT,WIDTH, PLAYER1);
@@ -82,7 +96,7 @@ void DrawOutline(){	/*{{{*/
 	DrawBox(17,WIDTH+10,1,8, PLAYER2);
 }/*}}}*/
 
-int GetCommand(){/*{{{*/
+int GetCommand(void){/*{{{*/
 	int command;
 	command = wgetch(stdscr);
 	switch(command){
@@ -232,8 +246,7 @@ void play(){/*{{{*/
 	clear();
 	act.sa_handler = BlockDown;
 	sigaction(SIGALRM,&act,&oact);
-	InitTetris(PLAYER1);
-	InitTetris(PLAYER2);
+	InitTetris();
 	do{
 		if(timed_out==0){
 			alarm(1);
@@ -333,8 +346,8 @@ void BlockDown(int sig){/*{{{*/
 		if(blockY==-1) gameOver = true;
 		
 		score += AddBlockToField(field[PLAYER1],nextBlock[0],blockRotate,blockY,blockX);
-		score += DeleteLine(field[PLAYER1]);
 		score += AddBlockToField(field[PLAYER2],nextBlock[0],blockRotate,blockY,blockX);
+		score += DeleteLine(field[PLAYER1]);
 		score += DeleteLine(field[PLAYER2]);
 		
 		for(i=0;i<BLOCK_NUM-1;++i)
@@ -381,7 +394,7 @@ int DeleteLine(char f[HEIGHT][WIDTH]){/*{{{*/
 		{
 			for(k=i;k>0;--k)
 				for(j=0;j<WIDTH;++j)
-					f[k][j] = f[k-1][j];			
+					f[k][j] = f[k-1][j];
 			cnt++;
 		}
 	}

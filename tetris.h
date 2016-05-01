@@ -8,6 +8,7 @@
 #include <ncurses.h>
 #include <signal.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define PLAYER1         0
 #define PLAYER2         1
@@ -152,14 +153,14 @@ int total_moves = 1; // 총 테트리스 클리어 블럭 개수
  *	input	: none
  *	return	: none
  ***********************************************************/
-void InitTetris(int selectPlayer);
+void InitTetris(void);
 
 /***********************************************************
  *	테트리스의 모든  interface를 그려준다.
  *	input	: none
  *	return	: none
  ***********************************************************/
-void DrawOutline();
+void DrawOutline(void);
 
 /***********************************************************
  *	테트리스와 관련된 키입력을 받는다.
@@ -172,7 +173,7 @@ void DrawOutline();
  *		  ' '	   : Space bar
  *		  'q'/'Q'  : quit
  ***********************************************************/
-int GetCommand();
+int GetCommand(void);
 
 /***********************************************************
  *	GetCommand로 입력받은 command에 대한 동작을 수행한다.
