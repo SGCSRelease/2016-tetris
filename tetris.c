@@ -81,6 +81,8 @@ void DrawOutline(void){	/*{{{*/
 	/* next block을 보여주는 공간의 테두리를 그린다.*/
 	move(2,WIDTH+10);
 	printw("NEXT BLOCK");
+	move(2,WINSPAN + WIDTH+10);
+	printw("NEXT BLOCK");
 	DrawBox(3,WIDTH+10,4,8, PLAYER1);
 	DrawBox(3,WIDTH+10,4,8, PLAYER2);
 
@@ -91,6 +93,8 @@ void DrawOutline(void){	/*{{{*/
 	
 	/* score를 보여주는 공간의 테두리를 그린다.*/
 	move(16,WIDTH+10);
+	printw("SCORE");
+	move(16,WINSPAN + WIDTH+10);
 	printw("SCORE");
 	DrawBox(17,WIDTH+10,1,8, PLAYER1);
 	DrawBox(17,WIDTH+10,1,8, PLAYER2);
@@ -163,7 +167,7 @@ void DrawField(int selectPlayer){/*{{{*/
 	int i,j;
 	for(j=0;j<HEIGHT;j++){
 		move(j+1,selectPlayer*WINSPAN + 1);
-		for(i=selectPlayer*WINSPAN;i<selectPlayer*WINSPAN + WIDTH;i++){
+		for(i=0;i<WIDTH;i++){
 			if(field[selectPlayer][j][i]==1){
 				attron(A_REVERSE);
 				printw(" ");
