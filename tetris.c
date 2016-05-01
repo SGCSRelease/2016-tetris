@@ -28,11 +28,11 @@ int main(){/*{{{*/
 	return 0;
 }/*}}}*/
 
-void InitTetris(){/*{{{*/
+void InitTetris(int PLAYER){/*{{{*/
 	int i,j;
 
 	for(j=0;j<HEIGHT;j++)
-		for(i=0;i<WIDTH;i++)
+		for(i=0;i<WIDTH+PLAYER;i++)
 			field[j][i]=0;
 
 	for(i=0;i<BLOCK_NUM;++i)
@@ -257,6 +257,17 @@ void play(){/*{{{*/
 	getch();
 	newRank(score);
 }/*}}}*/
+
+void playPLAYER1(){
+    
+
+}
+
+void playPLAYER2(){
+
+
+}
+
 
 char menu(){/*{{{*/
 	printw("1. play\n");

@@ -9,8 +9,8 @@
 #include <signal.h>
 #include <string.h>
 
-#define PLAYER1WIN      0
-#define PLAYER2WIN      50
+#define PLAYER1      0
+#define PLAYER2      50
 #define WIDTH	        20
 #define HEIGHT	        30
 #define NOTHING	        0
@@ -315,8 +315,8 @@ void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate);
  *	input	: none
  *	return	: none
  ***********************************************************/
-void play();
-
+void playPLAYER2();
+void playPLAYER1();
 /***********************************************************
  *	메뉴를 보여준다.
  *	input	: none
