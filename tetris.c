@@ -7,6 +7,7 @@ int main(){/*{{{*/
 
 	initscr();
 	noecho();
+    curs_set(0);
 	keypad(stdscr, TRUE);	
 
 	srand((unsigned int)time(NULL));
@@ -16,7 +17,6 @@ int main(){/*{{{*/
 		switch(menu()){
 		case MENU_PLAY: play(); break;
 		case MENU_RANK: rank(); break;
-		case MENU_RECO: recommendedPlay(); break;
 		case MENU_EXIT: exit=1; break;
 		default: break;
 		}
@@ -28,12 +28,12 @@ int main(){/*{{{*/
 	return 0;
 }/*}}}*/
 
-void InitTetris(){/*{{{*/
-	int i,j;
-
-	for(j=0;j<HEIGHT;j++)
-		for(i=0;i<WIDTH;i++)
-			field[j][i]=0;
+void InitTetris(void){/*{{{*/
+	int i,j,window;
+    for(window = 0; window < 2; ++window)
+        for(j=0;j<HEIGHT;j++)
+            for(i=0;i<WIDTH;i++)
+                field[window][j][i]=0;
 
 	for(i=0;i<BLOCK_NUM;++i)
 		nextBlock[i] = rand()%7;
@@ -47,41 +47,60 @@ void InitTetris(){/*{{{*/
 	total_seconds = 0.0;
 	total_moves = 0;
 	
-	recommend();
+    // Player 1
 	move(20,WIDTH+10);
 	printw("total time(s) =");
 	move(21,WIDTH+10);
 	printw("score/time(s) =");
 	move(22,WIDTH+10);
 	printw("score/space(byte) =");
+    // Player 2
+	move(20,WINSPAN + WIDTH+10);
+	printw("total time(s) =");
+	move(21,WINSPAN + WIDTH+10);
+	printw("score/time(s) =");
+	move(22,WINSPAN + WIDTH+10);
+	printw("score/space(byte) =");
 	DrawOutline();
-	DrawField();
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
-	DrawNextBlock(nextBlock);
-	PrintScore(score);
+	DrawField(PLAYER1);
+	DrawField(PLAYER2);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,PLAYER1);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate,PLAYER2);
+	DrawNextBlock(nextBlock, PLAYER1);
+	DrawNextBlock(nextBlock, PLAYER2);
+	PrintScore(score, PLAYER1);
+	PrintScore(score, PLAYER2);
 }/*}}}*/
 
-void DrawOutline(){	/*{{{*/
+void DrawOutline(void){	/*{{{*/
 	int i,j;
 	/* 블럭이 떨어지는 공간의 테두리를 그린다.*/
-	DrawBox(0,0,HEIGHT,WIDTH);
+	DrawBox(0,0,HEIGHT,WIDTH, PLAYER1);
+	DrawBox(0,0,HEIGHT,WIDTH, PLAYER2);
 
 	/* next block을 보여주는 공간의 테두리를 그린다.*/
 	move(2,WIDTH+10);
 	printw("NEXT BLOCK");
-	DrawBox(3,WIDTH+10,4,8);
+	move(2,WINSPAN + WIDTH+10);
+	printw("NEXT BLOCK");
+	DrawBox(3,WIDTH+10,4,8, PLAYER1);
+	DrawBox(3,WIDTH+10,4,8, PLAYER2);
 
 	/* next next block을 보여주는 공간의 테두리를 그린다.*/
 	move(9,WIDTH+10);
-	DrawBox(9,WIDTH+10,4,8);
+	DrawBox(9,WIDTH+10,4,8, PLAYER1);
+	DrawBox(9,WIDTH+10,4,8, PLAYER2);
 	
 	/* score를 보여주는 공간의 테두리를 그린다.*/
 	move(16,WIDTH+10);
 	printw("SCORE");
-	DrawBox(17,WIDTH+10,1,8);
+	move(16,WINSPAN + WIDTH+10);
+	printw("SCORE");
+	DrawBox(17,WIDTH+10,1,8, PLAYER1);
+	DrawBox(17,WIDTH+10,1,8, PLAYER2);
 }/*}}}*/
 
-int GetCommand(){/*{{{*/
+int GetCommand(void){/*{{{*/
 	int command;
 	command = wgetch(stdscr);
 	switch(command){
@@ -95,7 +114,7 @@ int GetCommand(){/*{{{*/
 		break;
 	case ' ':	/* space key*/
 		/*fall block*/
-		for(;CheckToMove(field,nextBlock[0],blockRotate,blockY+1,blockX)!=0;++blockY);
+		for(;CheckToMove(field[PLAYER1],nextBlock[0],blockRotate,blockY+1,blockX)!=0;++blockY);
 		timed_out = 1;
 		break;
 	case 'q':
@@ -117,19 +136,19 @@ int ProcessCommand(int command){/*{{{*/
 		ret = QUIT;
 		break;
 	case KEY_UP:
-		if((drawFlag = CheckToMove(field,nextBlock[0],(blockRotate+1)%4,blockY,blockX)))
+		if((drawFlag = CheckToMove(field[PLAYER1],nextBlock[0],(blockRotate+1)%4,blockY,blockX)))
 			blockRotate=(blockRotate+1)%4;
 		break;
 	case KEY_DOWN:
-		if((drawFlag = CheckToMove(field,nextBlock[0],blockRotate,blockY+1,blockX)))
+		if((drawFlag = CheckToMove(field[PLAYER1],nextBlock[0],blockRotate,blockY+1,blockX)))
 			blockY++;
 		break;
 	case KEY_RIGHT:
-		if((drawFlag = CheckToMove(field,nextBlock[0],blockRotate,blockY,blockX+1)))
+		if((drawFlag = CheckToMove(field[PLAYER1],nextBlock[0],blockRotate,blockY,blockX+1)))
 			blockX++;
 		break;
 	case KEY_LEFT:
-		if((drawFlag = CheckToMove(field,nextBlock[0],blockRotate,blockY,blockX-1)))
+		if((drawFlag = CheckToMove(field[PLAYER1],nextBlock[0],blockRotate,blockY,blockX-1)))
 			blockX--;
 		break;
 	case ' ':
@@ -137,16 +156,19 @@ int ProcessCommand(int command){/*{{{*/
 	default:
 		break;
 	}
-	if(drawFlag) DrawChange(field,command,nextBlock[0],blockRotate,blockY,blockX);
+	if(drawFlag) {
+        DrawChange(field[PLAYER1],command,nextBlock[0],blockRotate,blockY,blockX, PLAYER1);
+        DrawChange(field[PLAYER2],command,nextBlock[0],blockRotate,blockY,blockX, PLAYER2);
+    }
 	return ret;	
 }/*}}}*/
 
-void DrawField(int WIN){/*{{{*/
+void DrawField(int selectPlayer){/*{{{*/
 	int i,j;
 	for(j=0;j<HEIGHT;j++){
-		move(j+1,1);
-		for(i=0;i<WIN + WIDTH;i++){
-			if(field[j][i]==1){
+		move(j+1,selectPlayer*WINSPAN + 1);
+		for(i=0;i<WIDTH;i++){
+			if(field[selectPlayer][j][i]==1){
 				attron(A_REVERSE);
 				printw(" ");
 				attroff(A_REVERSE);
@@ -156,15 +178,15 @@ void DrawField(int WIN){/*{{{*/
 	}
 }/*}}}*/
 
-void PrintScore(int score){/*{{{*/
-	move(18,WIDTH+11);
+void PrintScore(int score, int selectPlayer){/*{{{*/
+	move(18,selectPlayer*WINSPAN + WIDTH+11);
 	printw("%8d",score);
 }/*}}}*/
 
-void DrawNextBlock(int *nextBlock){/*{{{*/
+void DrawNextBlock(int *nextBlock, int selectPlayer){/*{{{*/
 	int i, j;
 	for( i = 0; i < 4; i++ ){
-		move(4+i,WIDTH+13);
+		move(4+i,selectPlayer*WINSPAN + WIDTH+13);
 		for( j = 0; j < 4; j++ ){
 			if( block[nextBlock[1]][0][i][j] == 1 ){
 				attron(A_REVERSE);
@@ -175,7 +197,7 @@ void DrawNextBlock(int *nextBlock){/*{{{*/
 		}
 	}
 	for( i = 0; i < 4; i++ ){
-		move(10+i,WIDTH+13);
+		move(10+i,selectPlayer*WINSPAN + WIDTH+13);
 		for( j = 0; j < 4; j++ ){
 			if( block[nextBlock[2]][0][i][j] == 1 ){
 				attron(A_REVERSE);
@@ -187,37 +209,38 @@ void DrawNextBlock(int *nextBlock){/*{{{*/
 	}
 }/*}}}*/
 
-void DrawBlock(int y, int x, int blockID,int blockRotate,char tile){/*{{{*/
+void DrawBlock(int y, int x, int blockID,
+        int blockRotate, char tile, int selectPlayer){/*{{{*/
 	int i,j;
 	
 	for(i=0;i<4;i++)
 		for(j=0;j<4;j++)
 			if(block[blockID][blockRotate][i][j]==1 && i+y>=0){
-				move(i+y+1,j+x+1);
+				move(i+y+1,selectPlayer*WINSPAN + j+x+1);
 				attron(A_REVERSE);
 				printw("%c",tile);
 				attroff(A_REVERSE);
 			}
 
-	move(HEIGHT,WIDTH+10);
+	move(HEIGHT,selectPlayer*WINSPAN + WIDTH+10);
 }/*}}}*/
 
-void DrawBox(int y,int x, int height, int width){/*{{{*/
+void DrawBox(int y,int x, int height, int width, int selectPlayer){/*{{{*/
 	int i,j;
-	move(y,x);
+	move(y,selectPlayer*WINSPAN + x);
 	addch(ACS_ULCORNER);
-	for(i=0;i<width;i++)
+	for(i=selectPlayer*WINSPAN;i<selectPlayer*WINSPAN + width;i++)
 		addch(ACS_HLINE);
 	addch(ACS_URCORNER);
 	for(j=0;j<height;j++){
-		move(y+j+1,x);
+		move(y+j+1,selectPlayer*WINSPAN + x);
 		addch(ACS_VLINE);
-		move(y+j+1,x+width+1);
+		move(y+j+1,selectPlayer*WINSPAN + x+width+1);
 		addch(ACS_VLINE);
 	}
-	move(y+j+1,x);
+	move(y+j+1,selectPlayer*WINSPAN + x);
 	addch(ACS_LLCORNER);
-	for(i=0;i<width;i++)
+	for(i=selectPlayer*WINSPAN;i<selectPlayer*WINSPAN + width;i++)
 		addch(ACS_HLINE);
 	addch(ACS_LRCORNER);
 }/*}}}*/
@@ -237,8 +260,11 @@ void play(){/*{{{*/
 		command = GetCommand();
 		if(ProcessCommand(command)==QUIT){
 			alarm(0);
-			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
 			move(HEIGHT/2,WIDTH/2-4);
+			printw("Good-bye!!");
+			move(HEIGHT/2,WINSPAN + WIDTH/2-4);
 			printw("Good-bye!!");
 			refresh();
 			getch();
@@ -250,8 +276,11 @@ void play(){/*{{{*/
 
 	alarm(0);
 	getch();
-	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER1);
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10, PLAYER2);
 	move(HEIGHT/2,WIDTH/2-4);
+	printw("GameOver!!");
+	move(HEIGHT/2,WINSPAN + WIDTH/2-4);
 	printw("GameOver!!");
 	refresh();
 	getch();
@@ -261,12 +290,11 @@ void play(){/*{{{*/
 char menu(){/*{{{*/
 	printw("1. play\n");
 	printw("2. rank\n");
-	printw("3. recommended play\n");
-	printw("4. exit\n");
+	printw("3. exit\n");
 	return wgetch(stdscr);
 }/*}}}*/
 
-int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int blockY, int blockX){/*{{{*/
+int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate,int blockY, int blockX){/*{{{*/
 	int i,j;
 
 	for(i=0;i<4;++i)
@@ -277,19 +305,21 @@ int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int bloc
 	return 1;
 }/*}}}*/
 
-void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX){/*{{{*/
+void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,
+        int blockRotate, int blockY, int blockX, int selectPlayer){/*{{{*/
 	int i,j,x,y,rot,pre;
 
 	switch(command){
-		case KEY_UP:    x = blockX;   y = blockY;   rot = (blockRotate+3)%4; break;
-		case KEY_DOWN:  x = blockX;   y = blockY-1; rot = blockRotate;       break;
-		case KEY_LEFT:  x = blockX+1; y = blockY;   rot = blockRotate;       break;
-		case KEY_RIGHT: x = blockX-1; y = blockY;   rot = blockRotate;       break;
-		default:        x = blockX;   y = blockY;   rot = blockRotate;       break;
+		case KEY_UP:    x =blockX;   y = blockY;   rot = (blockRotate+3)%4; break;
+		case KEY_DOWN:  x =blockX;   y = blockY-1; rot = blockRotate;       break;
+		case KEY_LEFT:  x =blockX+1; y = blockY;   rot = blockRotate;       break;
+		case KEY_RIGHT: x =blockX-1; y = blockY;   rot = blockRotate;       break;
+		default:        x =blockX;   y = blockY;   rot = blockRotate;       break;
 	}
 	
-	for(pre=y;CheckToMove(field,currentBlock,rot,pre+1,x)!=0;++pre);
+	for(pre=y;CheckToMove(field[selectPlayer],currentBlock,rot,pre+1,x)!=0;++pre);
 	
+    x += selectPlayer*WINSPAN;
 
 	for(i=0;i<4;++i)
 		for(j=0;j<4;++j)
@@ -303,34 +333,38 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 			}
 		}
 	
-	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate, selectPlayer);
 }/*}}}*/
 
 void BlockDown(int sig){/*{{{*/
 	int i;
 	
-	if(CheckToMove(field,nextBlock[0],blockRotate,blockY+1,blockX))
+	if(CheckToMove(field[PLAYER1],nextBlock[0],blockRotate,blockY+1,blockX))
 	{
 		blockY++;
-		DrawChange(field,KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX);
+		DrawChange(field[PLAYER1],KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX, PLAYER1);
+		DrawChange(field[PLAYER2],KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX, PLAYER2);
 	}
 	else
 	{
 		if(blockY==-1) gameOver = true;
 		
-		score += AddBlockToField(field,nextBlock[0],blockRotate,blockY,blockX);
-		score += DeleteLine(field);
+		score += AddBlockToField(field[PLAYER1],nextBlock[0],blockRotate,blockY,blockX);
+		score += AddBlockToField(field[PLAYER2],nextBlock[0],blockRotate,blockY,blockX);
+		score += DeleteLine(field[PLAYER1]);
+		score += DeleteLine(field[PLAYER2]);
 		
 		for(i=0;i<BLOCK_NUM-1;++i)
 			nextBlock[i] = nextBlock[i+1];
 		nextBlock[i] = rand()%7;
 
-		DrawNextBlock(nextBlock);
-		DrawField();
-		PrintScore(score);
+		DrawNextBlock(nextBlock, PLAYER1);
+        DrawNextBlock(nextBlock, PLAYER2);
+		DrawField(PLAYER1);
+        DrawField(PLAYER2);
+		PrintScore(score, PLAYER1);
+        PrintScore(score, PLAYER2);
 	
-		recommend();
-
 		blockY = -1;
 		blockX = WIDTH/2-2;
 		blockRotate = 0;
@@ -364,7 +398,7 @@ int DeleteLine(char f[HEIGHT][WIDTH]){/*{{{*/
 		{
 			for(k=i;k>0;--k)
 				for(j=0;j<WIDTH;++j)
-					f[k][j] = f[k-1][j];			
+					f[k][j] = f[k-1][j];
 			cnt++;
 		}
 	}
@@ -372,15 +406,14 @@ int DeleteLine(char f[HEIGHT][WIDTH]){/*{{{*/
 	return cnt*cnt*100;
 }/*}}}*/
 
-void DrawShadow(int y, int x, int blockID,int blockRotate){/*{{{*/
-	for(;CheckToMove(field,blockID,blockRotate,y+1,x)!=0;++y);
-	DrawBlock(y,x,blockID,blockRotate,'\\');
+void DrawShadow(int y, int x, int blockID,int blockRotate, int selectPlayer){/*{{{*/
+	for(;CheckToMove(field[selectPlayer],blockID,blockRotate,y+1,x)!=0;++y);
+	DrawBlock(y,x,blockID,blockRotate,'\\', selectPlayer);
 }/*}}}*/
 
-void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate){/*{{{*/
-	DrawBlock(y,x,blockID,blockRotate,' ');
-	DrawBlock(recommendY,recommendX,blockID,recommendR,'R');
-	DrawShadow(y,x,blockID,blockRotate);
+void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate, int selectPlayer){/*{{{*/
+	DrawBlock(y,x,blockID,blockRotate,' ', selectPlayer);
+	DrawShadow(y,x,blockID,blockRotate,selectPlayer);
 }/*}}}*/
 
 void createRankList(){/*{{{*/
@@ -521,140 +554,4 @@ void newRank(int score){/*{{{*/
 
 	rankRoot[i].score = score;
 	strcpy(rankRoot[i].name,str);
-}/*}}}*/
-
-void recommend(void){/*{{{*/
-	int rot,y,x,i,j;
-	int minblank=-1,mindiff=-1;
-	int resultx=-1,resulty=-1,resultrot=-1;
-	int blank,diff;
-	int h[WIDTH] = {0,};
-
-	for(rot=0;rot<NUM_OF_ROTATE;++rot)
-	{
-		for(x=0-BLOCK_WIDTH;x<WIDTH;++x)
-		{
-			if(CheckToMove(field,nextBlock[0],rot,0,x))
-			{
-				for(y=0;CheckToMove(field,nextBlock[0],rot,y+1,x);++y);
-				for(i=0;i<BLOCK_HEIGHT;++i)
-					for(j=0;j<BLOCK_WIDTH;++j)
-						if(block[nextBlock[0]][rot][i][j])
-							field[i+y][j+x] = 1;
-
-				for(i=0;i<WIDTH;++i)
-					for(j=0;j<HEIGHT;++j)
-						if(field[j][i])
-						{
-							h[i] = j;
-							break;
-						}
-				for(diff=0,i=1;i<WIDTH;++i)
-					diff += h[i]>h[i-1]?(h[i]-h[i-1]):(h[i-1]-h[i]);
-				for(blank=0,i=0;i<WIDTH;++i)
-					for(j=h[i];j<HEIGHT;++j)
-						if(field[j][i]==0)
-							blank++;
-				
-				if(minblank==-1||(minblank>blank)||((minblank==blank)&&(mindiff>diff)))
-				{
-					minblank = blank;
-					mindiff = diff;
-					resultx = x;
-					resulty = y;
-					resultrot = rot;
-				}
-				for(i=0;i<BLOCK_HEIGHT;++i)
-					for(j=0;j<BLOCK_WIDTH;++j)
-						if(block[nextBlock[0]][rot][i][j])
-							field[i+y][j+x] = 0;
-			}
-		}
-	}
-	recommendX = resultx;
-	recommendY = resulty;
-	recommendR = resultrot;
-}/*}}}*/
-
-void BlockDownRecommend(int sig){/*{{{*/
-	int i,j;
-	int prescore = 0;
-	clock_t old;
-
-	// for time calculation
-	old = clock();
-	for(i=0;i<1000;++i) recommend();
-	old = clock()-old;
-	total_seconds += ( (float)old/CLOCKS_PER_SEC );
-	
-	if(CheckToMove(field,nextBlock[0],blockRotate,blockY+1,blockX))
-	{
-		recommend();
-		blockRotate = recommendR;
-		blockX = recommendX;
-		blockY = recommendY;
-		DrawChange(field,KEY_DOWN,nextBlock[0],blockRotate,blockY,blockX);
-	}
-	else
-	{
-		total_moves++;
-		if(blockY==-1) gameOver = true;
-
-		score += AddBlockToField(field,nextBlock[0],blockRotate,blockY,blockX);
-		score += DeleteLine(field);
-
-		for(i=0;i<BLOCK_NUM-1;++i)
-			nextBlock[i] = nextBlock[i+1];
-		nextBlock[i] = rand()%7;
-
-		DrawNextBlock(nextBlock);
-		DrawField();
-		PrintScore(score);
-
-		blockY = -1;
-		blockX = WIDTH/2-2;
-		blockRotate = 0;
-	}
-	move(20,WIDTH+10);
-	printw("total time(s) = %1.5f",total_seconds/1000);
-	move(21,WIDTH+10);
-	printw("score/time(s) = %d", (int)(score/total_seconds*1000));
-	move(22,WIDTH+10);
-	printw("score/space(byte) = %.4f", (float)score/(float)((12+WIDTH)*sizeof(int)*total_moves));
-	timed_out = 0;
-}/*}}}*/
-
-void recommendedPlay(){/*{{{*/
-	// user code
-	int command;
-	clear();
-	act.sa_handler = BlockDownRecommend;
-	sigaction(SIGALRM,&act,&oact);
-	InitTetris();
-	do{
-		if(timed_out==0){
-			alarm(1);
-			timed_out=1;
-		}
-
-		command = GetCommand();
-		if(ProcessCommand(command)==QUIT){
-			alarm(0);
-			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
-			move(HEIGHT/2,WIDTH/2-4);
-			printw("Good-bye!!");
-			refresh();
-			getch();
-
-			return;
-		}
-	}while(!gameOver);
-
-	alarm(0);
-	getch();
-	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
-	move(HEIGHT/2,WIDTH/2-4);
-	printw("GameOver!!");
-	refresh();
-	getch();
 }/*}}}*/

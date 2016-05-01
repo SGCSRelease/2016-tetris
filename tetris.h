@@ -8,9 +8,11 @@
 #include <ncurses.h>
 #include <signal.h>
 #include <string.h>
+#include <stdbool.h>
 
-#define PLAYER1WIN      0
-#define PLAYER2WIN      50
+#define PLAYER1         0
+#define PLAYER2         1
+#define WINSPAN         60
 #define WIDTH	        20
 #define HEIGHT	        30
 #define NOTHING	        0
@@ -24,8 +26,7 @@
 // menu number
 #define MENU_PLAY '1'
 #define MENU_RANK '2'
-#define MENU_RECO '3'
-#define MENU_EXIT '4'
+#define MENU_EXIT '3'
 
 // 사용자 이름의 길이
 #define NAMELEN 16
@@ -137,14 +138,12 @@ const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={
 	}
 };
 
-char field[HEIGHT][WIDTH];	/* 테트리스의 메인 게임 화면 */
+char field[2][HEIGHT][WIDTH];	/* 테트리스의 메인 게임 화면 */
 int nextBlock[BLOCK_NUM];	/* 현재 블럭의 ID와 다음 블럭의 ID들을 저장; [0]: 현재 블럭; [1]: 다음 블럭 */
 int blockRotate,blockY,blockX;	/* 현재 블럭의 회전, 블럭의 Y 좌표, 블럭의 X 좌표*/
 int score;			/* 점수가 저장*/
 int gameOver=0;			/* 게임이 종료되면 1로 setting된다.*/
 int timed_out;
-int recommendX,recommendY,recommendR;
-int recommendR,recommendY,recommendX; // 추천 블럭 배치 정보. 차례대로 회전, Y 좌표, X 좌표
 RankNode *rankRoot; // 랭킹 저장 배열. 맨 첫 원소의 score에는 총 원소 개수가 저장되어 있다.
 double total_seconds = 0.0; // 총 시간
 int total_moves = 1; // 총 테트리스 클리어 블럭 개수
@@ -154,14 +153,14 @@ int total_moves = 1; // 총 테트리스 클리어 블럭 개수
  *	input	: none
  *	return	: none
  ***********************************************************/
-void InitTetris();
+void InitTetris(void);
 
 /***********************************************************
  *	테트리스의 모든  interface를 그려준다.
  *	input	: none
  *	return	: none
  ***********************************************************/
-void DrawOutline();
+void DrawOutline(void);
 
 /***********************************************************
  *	테트리스와 관련된 키입력을 받는다.
@@ -174,7 +173,7 @@ void DrawOutline();
  *		  ' '	   : Space bar
  *		  'q'/'Q'  : quit
  ***********************************************************/
-int GetCommand();
+int GetCommand(void);
 
 /***********************************************************
  *	GetCommand로 입력받은 command에 대한 동작을 수행한다.
@@ -220,14 +219,15 @@ int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int bloc
  *		  (int) 블럭의 X좌표
  *	return	: none
  ***********************************************************/
-void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX);
+void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,
+        int blockRotate, int blockY, int blockX, int selectPlayer);
 
 /***********************************************************
  *	테트리스의 블럭이 쌓이는 field를 그려준다.
  *	input	: none
  *	return	: none
  ***********************************************************/
-void DrawField();
+void DrawField(int selectPlayer);
 
 /***********************************************************
  *	떨어지는 블럭을 field에 더해준다.
@@ -260,14 +260,14 @@ void gotoyx(int y, int x);
  *	input	: (int*) 블럭의 모양에 대한 ID 배열
  *	return	: none
  ***********************************************************/
-void DrawNextBlock(int *nextBlock);
+void DrawNextBlock(int *nextBlock, int selectPlayer);
 
 /***********************************************************
  *	테트리스의 화면 오른쪽 하단에 Score를 출력한다.
  *	input	: (int) 출력할 점수
  *	return	: none
  ***********************************************************/
-void PrintScore(int score);
+void PrintScore(int score, int selectPlayer);
 
 /***********************************************************
  *	해당 좌표(y,x)에 원하는 크기(height,width)의 box를 그린다.
@@ -277,7 +277,7 @@ void PrintScore(int score);
  *		  (int) 박스의 넓이
  *	return	: none
  ***********************************************************/
-void DrawBox(int y,int x, int height, int width);
+void DrawBox(int y,int x, int height, int width, int selectPlayer);
 
 /***********************************************************
  *	해당 좌표(y,x)에 원하는 모양의 블록을 그린다.
@@ -288,7 +288,8 @@ void DrawBox(int y,int x, int height, int width);
  *		  (char) 블록을 그릴 패턴 모양
  *	return	: none
  ***********************************************************/
-void DrawBlock(int y, int x, int blockID,int blockRotate,char tile);
+void DrawBlock(int y, int x, int blockID,
+        int blockRotate, char tile, int selectPlayer);
 
 /***********************************************************
  *	블록이 떨어질 위치를 미리 보여준다.
@@ -298,7 +299,7 @@ void DrawBlock(int y, int x, int blockID,int blockRotate,char tile);
  *		  (int) 블록의 회전 횟수
  *	return	: none
  ***********************************************************/
-void DrawShadow(int y, int x, int blockID,int blockRotate);
+void DrawShadow(int y, int x, int blockID,int blockRotate, int selectPlayer);
 
 /***********************************************************
  *	움직임이 갱신될 때마다 현재 블록과 함께 그림자를 그린다.
@@ -308,7 +309,7 @@ void DrawShadow(int y, int x, int blockID,int blockRotate);
  *		  (int) 블록의 회전 횟수
  *	return	: none
  ***********************************************************/
-void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate);
+void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate, int selectPlayer);
 
 /***********************************************************
  *	테트리스 게임을 시작한다.
@@ -360,33 +361,5 @@ void writeRankFile();
  *	return	: none
  ***********************************************************/
 void newRank(int score);
-
-/***********************************************************
- *	추천 블럭 배치를 구한다.
- *	input	: none
- *	return	: none
- ***********************************************************/
-void recommend(void);
-
-/***********************************************************
- *	추천 기능에 따라 블럭을 배치하여 진행하는 게임을 시작한다.
- *	input	: none
- *	return	: none
- ***********************************************************/
-void recommendedPlay();
-
-/***********************************************************
- *	블럭이 추천된 위치로 감.
- *	더이상 내릴수 없을 경우,
- *		블럭을 field에 합친다.
- *		완전이 채워진 line을 지운다.
- *		next block을 current block으로 바꿔주고
- *		block의 좌표를 초기화 한다.
- *		다음 블럭을 화면에 그리고 갱신된 score를 
- *		화면에 display한다.
- *	input	: (int) sig
- *	return	: none
- ***********************************************************/
-void BlockDownRecommend(int sig);
 
 #endif
