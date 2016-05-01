@@ -10,14 +10,9 @@
 #include <string.h>
 #include <stdbool.h>
 
-<<<<<<< HEAD
-#define PLAYER1      0
-#define PLAYER2      50
-=======
 #define PLAYER1         0
 #define PLAYER2         1
 #define WINSPAN         60
->>>>>>> f71ee98dd9b5a8f5dc922a09aef8f9429d958243
 #define WIDTH	        20
 #define HEIGHT	        30
 #define NOTHING	        0
